@@ -1,0 +1,159 @@
+@base = http://localhost:3000
+
+### ---------- AUTH ----------
+
+### Cadastrar usuário
+POST {{base}}/auth/cadastro
+Content-Type: application/json
+
+{ "nome": "Ana", "email": "ana@escola.com", "senha": "segredo1" }
+
+### Cadastrar segundo usuário (para testar 403)
+POST {{base}}/auth/cadastro
+Content-Type: application/json
+
+{ "nome": "Bia", "email": "bia@escola.com", "senha": "segredo2" }
+
+### Login (Ana)
+# @name login
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "ana@escola.com", "senha": "segredo1" }
+
+###
+@token = {{login.response.body.token}}
+
+### Login (Bia)
+# @name loginBia
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "bia@escola.com", "senha": "segredo2" }
+
+###
+@tokenBia = {{loginBia.response.body.token}}
+
+### Perfil sem token (401)
+GET {{base}}/auth/perfil
+
+### Perfil com token (200)
+GET {{base}}/auth/perfil
+Authorization: Bearer {{token}}
+
+### ---------- DISCOS ----------
+
+### Cadastrar disco (201)
+POST {{base}}/discos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "titulo": "Abbey Road", "artista": "The Beatles", "genero": "Rock", "preco": 129.9, "estoque": 10 }
+
+### Disco inválido: falta artista (400)
+POST {{base}}/discos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "titulo": "Abbey Road", "genero": "Rock", "preco": 129.9, "estoque": 10 }
+
+### Disco inválido: preço zero (400)
+POST {{base}}/discos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "titulo": "Abbey Road", "artista": "The Beatles", "genero": "Rock", "preco": 0, "estoque": 10 }
+
+### Cadastrar disco sem token (401)
+POST {{base}}/discos
+Content-Type: application/json
+
+{ "titulo": "X", "artista": "Y", "genero": "Z", "preco": 10, "estoque": 1 }
+
+### Listar discos (aberto, 200)
+GET {{base}}/discos
+
+### Detalhar disco (200)
+GET {{base}}/discos/1
+
+### Disco inexistente (404)
+GET {{base}}/discos/99
+
+### Editar disco como dono (200)
+PATCH {{base}}/discos/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "preco": 139.9 }
+
+### Editar disco de outro usuário (403)
+PATCH {{base}}/discos/1
+Authorization: Bearer {{tokenBia}}
+Content-Type: application/json
+
+{ "preco": 1 }
+
+### ---------- PEDIDOS ----------
+
+### Criar pedido (201) - Bia compra o disco da Ana
+POST {{base}}/pedidos
+Authorization: Bearer {{tokenBia}}
+Content-Type: application/json
+
+{ "discoId": 1, "quantidade": 2 }
+
+### Pedido inválido: quantidade 0 (400)
+POST {{base}}/pedidos
+Authorization: Bearer {{tokenBia}}
+Content-Type: application/json
+
+{ "discoId": 1, "quantidade": 0 }
+
+### Pedidos sem token (401)
+GET {{base}}/pedidos
+
+### Listar meus pedidos (200)
+GET {{base}}/pedidos
+Authorization: Bearer {{tokenBia}}
+
+### Detalhar pedido como dono (200)
+GET {{base}}/pedidos/1
+Authorization: Bearer {{tokenBia}}
+
+### Detalhar pedido de outro usuário (403)
+GET {{base}}/pedidos/1
+Authorization: Bearer {{token}}
+
+### Pedido inexistente (404)
+GET {{base}}/pedidos/99
+Authorization: Bearer {{tokenBia}}
+
+### Editar quantidade (200)
+PATCH {{base}}/pedidos/1
+Authorization: Bearer {{tokenBia}}
+Content-Type: application/json
+
+{ "quantidade": 3 }
+
+### Mudar status (200)
+PATCH {{base}}/pedidos/1/status
+Authorization: Bearer {{tokenBia}}
+Content-Type: application/json
+
+{ "status": "pago" }
+
+### Cancelar pedido (200)
+PATCH {{base}}/pedidos/1/cancelar
+Authorization: Bearer {{tokenBia}}
+
+### Devolver pedido (400 se não estiver entregue)
+PATCH {{base}}/pedidos/1/devolucao
+Authorization: Bearer {{tokenBia}}
+
+### Remover pedido (204)
+DELETE {{base}}/pedidos/1
+Authorization: Bearer {{tokenBia}}
+
+### Remover disco (204 se não houver pedidos)
+DELETE {{base}}/discos/1
+Authorization: Bearer {{token}}
