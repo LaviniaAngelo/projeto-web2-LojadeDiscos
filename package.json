@@ -5,8 +5,14 @@
   "type": "module",
   "main": "src/server.js",
   "scripts": {
+    "predev": "dbmate up",
     "dev": "node --env-file-if-exists=.env --watch src/server.js",
-    "start": "node --env-file-if-exists=.env src/server.js"
+    "prestart": "dbmate up",
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "db:new": "dbmate new",
+    "db:up": "dbmate up",
+    "db:rollback": "dbmate rollback",
+    "db:status": "dbmate status"
   },
   "engines": {
     "node": ">=22.9"
